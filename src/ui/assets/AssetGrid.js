@@ -24,6 +24,24 @@ function collectMenuProps({ item }) {
   return { item };
 }
 
+function updateAttribution(node, item) {
+  node.attribution = node.attribution || {};
+  if (item.attributions) {
+    // When loading from an asset source (Sketchfab, Google Poly, Bing,...) we get attributions
+    Object.assign(
+      node.attribution,
+      item.attributions.creator && item.attributions.creator.name ? { author: item.attributions.creator.name } : null,
+      item.attributions.creator && item.attributions.creator.url
+        ? { url: item.attributions.creator.url }
+        : (item.url && { url: item.url }) || null,
+      item.label ? { title: item.label } : null
+    );
+  } else {
+    // In case we don't get attributions this is most probably an uploaded asset
+    Object.assign(node.attribution, item.label ? { title: item.label.replace(/\.[^/.]+$/, "") } : null);
+  }
+}
+
 function AssetGridItem({ contextMenuId, tooltipComponent, disableTooltip, item, onClick, ...rest }) {
   const onClickItem = useCallback(
     e => {
@@ -137,7 +155,7 @@ export default function AssetGrid({ isLoading, selectedItems, items, onSelect, o
       }
 
       editor.getSpawnPosition(node.position);
-
+      updateAttribution(node, item);
       editor.addObject(node);
     },
     [editor]
@@ -153,6 +171,7 @@ export default function AssetGrid({ isLoading, selectedItems, items, onSelect, o
         Object.assign(node, item.initialProps);
       }
 
+      updateAttribution(node, item);
       editor.addObject(node);
     },
     [editor]
